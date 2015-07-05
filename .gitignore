@@ -1,1 +1,4 @@
 deploy/keys.txt
+target/
+*.swp
+*.class
