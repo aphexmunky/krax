@@ -1,28 +1,5 @@
-name := "Krax"
+lazy val root = (project in file(".")).
+  aggregate(seed)
 
-scalaVersion := "2.11.7"
+lazy val seed = project in file("seed")
 
-enablePlugins(DockerPlugin)
-
-resolvers ++= Seq(
-	"krasserm at bintray" at "http://dl.bintray.com/krasserm/maven",
-	"dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
-)
-
-libraryDependencies ++= Seq(
-	"com.github.dnvriend" %% "akka-persistence-inmemory" % "1.0.3"
-)
-
-scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation", "-Ywarn-dead-code", "-Ywarn-unused", "-Ywarn-unused-import")
-
-docker <<= (docker dependsOn assembly)
-
-dockerfile in docker := {
-  val artifact = (outputPath in assembly).value
-  val artifactTargetPath = s"/app/${artifact.name}"
-  new Dockerfile {
-    from("java")
-    add(artifact, artifactTargetPath)
-    entryPoint("java", "-jar", artifactTargetPath)
-  }
-}
