@@ -1,4 +1,5 @@
 import akka.actor.{ ActorSystem, Props, PoisonPill }
+import akka.routing.FromConfig
 import com.typesafe.config.ConfigFactory
 
 import akka.contrib.pattern.{ ClusterSingletonManager, ClusterSingletonProxy }
@@ -12,24 +13,41 @@ object Main extends App {
 
 	val system = ActorSystem("krax", config)
 
+	val workRouter = system.actorOf(FromConfig.props(Props[Test2]), name = "workerRouter")
+
     system.actorOf(ClusterSingletonManager.props(
-      singletonProps = Props[Test], singletonName = "test",
+      singletonProps = Props(new Test(workRouter)), singletonName = "test",
       terminationMessage = PoisonPill, role = Some("backend")),
       name = "singleton")
 
-    val testActor = system.actorOf(ClusterSingletonProxy.props(singletonPath = "/user/singleton/test",
-    role = Some("backend")), name = "testProxy")
+    val singleton = system.actorOf(ClusterSingletonProxy.props(singletonPath = "/user/singleton/test", role = Some("backend")), name = "testProxy")
 
-    Thread.sleep(6000)
-    system.scheduler.schedule(6 seconds, 1 second)(testActor ! "testing 123")
+    // val testActor = system.actorOf(Props[Test], "test")
+
+    // Thread.sleep(6000)
 
 }
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor.{ Actor, ActorLogging, ActorRef }
+import akka.routing.ConsistentHashingRouter.ConsistentHashable
 
-class Test extends Actor with ActorLogging {
+case class Msg(s: String) extends ConsistentHashable {
+	override def consistentHashKey: Any = s
+}
+
+class Test(otherActor: ActorRef) extends Actor with ActorLogging {
+
 	log.info("!!! ********* Test Actor Started ********* !!!")
+    context.system.scheduler.schedule(6 seconds, 2 second)(self ! "testing 123")
+
 	def receive = {
-		case msg => log.info(s"********* test received: [$msg] *********")
+		case msg => otherActor forward Msg(msg.toString)
+	}
+}
+
+class Test2 extends Actor with ActorLogging {
+	log.info("!!! ********* Test2 Actor Started ********* !!!")
+	def receive = {
+		case Msg(msg) => log.info(s"********* test2 received: [$msg] from: [$sender] *********")
 	}
 }
