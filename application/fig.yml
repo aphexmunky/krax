@@ -17,7 +17,7 @@ rest:
   hostname: krax-rest
   ports:
    - "2551"
-   - "8080"
+   - "8080:8080"
   links:
    - seed
 backend:
