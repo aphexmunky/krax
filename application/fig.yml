@@ -12,6 +12,14 @@ seed:
   hostname: krax-seed
   ports:
   - "2551"
+rest:
+  build: rest/target/docker
+  hostname: krax-rest
+  ports:
+   - "2551"
+   - "8080"
+  links:
+   - seed
 backend:
   build: backend/target/docker
   hostname: krax-backend
