@@ -1,8 +1,12 @@
-import akka.actor.{ ActorSystem, Props, PoisonPill }
+import akka.actor._
 import com.typesafe.config.ConfigFactory
 
-import akka.contrib.pattern.{ ClusterSingletonManager, ClusterSingletonProxy }
+import akka.contrib.pattern._
+import akka.pattern.ask
+import akka.contrib.pattern.ShardRegion
+import akka.util.Timeout
 import scala.concurrent.duration._
+import scala.util.Random
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -10,14 +14,43 @@ object Main extends App {
 
 	val config = ConfigFactory.load
 
+	Thread.sleep(10000)
+
 	val system = ActorSystem("krax", config)
 
-	val user1 = system.actorOf(Props(new User("heskethj")))
-	val user2 = system.actorOf(Props(new User("conroya")))
+	system.scheduler.schedule(10 seconds, 1 second)(send _)
 
-	user1 ! Register("joshua.hesketh@thehutgroup.com")
-	user2 ! Register("andy.conroy@thehutgroup.com")
+	val idExtractor: ShardRegion.IdExtractor = {
+		case msg @ Register(username, _)	⇒ (username, msg)
+	}
 
+	val shardResolver: ShardRegion.ShardResolver = {
+		case Register(username, _)			⇒ (username.hashCode % 12).toString
+	}
+
+	val user: ActorRef = ClusterSharding(system).start(
+		typeName = "User",
+		entryProps = Some(Props[User]),
+		idExtractor = idExtractor,
+		shardResolver = shardResolver)
+
+	def send = {
+		val acct = createRandomAccount
+		user ! Register(acct.username, acct.email)
+	}
+
+	val firstNames = List("josh","andy","siva","alex","elliot","phil","frank")
+	val surnames = List("hesketh","conroy","prakash","borshik","kennedy","parthiban")
+
+	case class Account(username: String, email: String)
+	def createRandomAccount: Account = {
+		def grab[T](l: List[T]) = Random.shuffle(l).head
+		val firstName = grab(firstNames)
+		val surname = grab(surnames)
+		val username = surname + firstName.head
+		val email = s"${firstName}.${surname}@thehutgroup.com"
+		Account(username, email)
+	}
 }
 
 import akka.actor.ActorLogging
@@ -26,24 +59,28 @@ import akka.persistence.PersistentActor
 case object GetEmail
 case class GetEmailResponse(email: Option[String])
 
-case class Register(email: String)
-case class Registered(email: String)
+case class Register(username: String, email: String)
+case class Registered(username: String, email: String)
 
-class User(username: String) extends PersistentActor with ActorLogging {
+class User extends PersistentActor with ActorLogging {
+	import ShardRegion.Passivate
 
-	override def persistenceId = s"user/$username"
+	override def persistenceId = self.path.parent.name + "-" + self.path.name
 
 	var savedEmail: Option[String] = None
 
 	def receiveCommand = {
 		case GetEmail => sender ! GetEmailResponse(savedEmail)
-		case Register(email) => persist(Registered(email)) { evt =>
+		case Register(username, email) => persist(Registered(username, email)) { evt =>
 			log.info(s"successfully registered $username as $email")
 			savedEmail = Some(email)
 		}
 	}
 
 	def receiveRecover = {
-		case Registered(email) => savedEmail = Some(email)
+		case Registered(username, email) => {
+			log.info(s"recovering $username, re-setting email to: [$email]")
+			savedEmail = Some(email)
+		}
 	}
 }
