@@ -1,3 +1,12 @@
+db:
+  image: abh1nav/cassandra:latest
+  hostname: cassandra-db
+  ports:
+   - "7199"
+   - "7000"
+   - "7001"
+   - "9160"
+   - "9042:9042"
 seed:
   build: seed/target/docker
   hostname: krax-seed
@@ -10,3 +19,4 @@ backend:
   - "2551"
   links:
    - seed
+   - db

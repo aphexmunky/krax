@@ -12,24 +12,38 @@ object Main extends App {
 
 	val system = ActorSystem("krax", config)
 
-    system.actorOf(ClusterSingletonManager.props(
-      singletonProps = Props[Test], singletonName = "test",
-      terminationMessage = PoisonPill, role = Some("backend")),
-      name = "singleton")
+	val user1 = system.actorOf(Props(new User("heskethj")))
+	val user2 = system.actorOf(Props(new User("conroya")))
 
-    val testActor = system.actorOf(ClusterSingletonProxy.props(singletonPath = "/user/singleton/test",
-    role = Some("backend")), name = "testProxy")
-
-    Thread.sleep(6000)
-    system.scheduler.schedule(6 seconds, 1 second)(testActor ! "testing 123")
+	user1 ! Register("joshua.hesketh@thehutgroup.com")
+	user2 ! Register("andy.conroy@thehutgroup.com")
 
 }
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor.ActorLogging
+import akka.persistence.PersistentActor
 
-class Test extends Actor with ActorLogging {
-	log.info("!!! ********* Test Actor Started ********* !!!")
-	def receive = {
-		case msg => log.info(s"********* test received: [$msg] *********")
+case object GetEmail
+case class GetEmailResponse(email: Option[String])
+
+case class Register(email: String)
+case class Registered(email: String)
+
+class User(username: String) extends PersistentActor with ActorLogging {
+
+	override def persistenceId = s"user/$username"
+
+	var savedEmail: Option[String] = None
+
+	def receiveCommand = {
+		case GetEmail => sender ! GetEmailResponse(savedEmail)
+		case Register(email) => persist(Registered(email)) { evt =>
+			log.info(s"successfully registered $username as $email")
+			savedEmail = Some(email)
+		}
+	}
+
+	def receiveRecover = {
+		case Registered(email) => savedEmail = Some(email)
 	}
 }
