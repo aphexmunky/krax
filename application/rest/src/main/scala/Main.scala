@@ -23,7 +23,7 @@ import spray.routing._
 import spray.http._
 import MediaTypes._
 
-class MyServiceActor extends Actor with MyService {
+class MyServiceActor extends Actor with MyService with BackendCall {
 
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test
@@ -35,13 +35,38 @@ class MyServiceActor extends Actor with MyService {
   def receive = runRoute(myRoute)
 }
 
+case object GetEmail
+case class GetEmailResponse(email: Option[String])
+
+case class Register(username: String, email: String)
+case class Registered(username: String, email: String)
+
+trait BackendCall {
+	this: Actor =>
+
+	import akka.cluster.routing.ClusterRouterGroup
+	import akka.cluster.routing.ClusterRouterGroupSettings
+	import akka.cluster.routing.AdaptiveLoadBalancingGroup
+	import akka.cluster.routing.HeapMetricsSelector
+
+	val backend = context.actorOf(
+	  ClusterRouterGroup(AdaptiveLoadBalancingGroup(HeapMetricsSelector),
+	    ClusterRouterGroupSettings(
+	      totalInstances = 100, routeesPaths = List("/user/userService"),
+	      allowLocalRoutees = true, useRole = Some("backend"))).props(),
+	  name = "backendRouter2")
+}
 trait MyService extends HttpService {
+  this: BackendCall =>
 
   val myRoute =
-    path("") {
+    path(Rest) { username =>
       get {
         respondWithMediaType(`text/html`) { // XML is marshalled to `text/xml` by default, so we simply override here
           complete {
+          	def call = backend ! Register(username, s"${username}@gmail.com")
+          	call
+          	
             <html>
               <body>
                 <h1>Say hello to <i>spray-routing</i> on <i>spray-can</i>!</h1>

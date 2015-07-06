@@ -14,47 +14,9 @@ object Main extends App {
 
 	val config = ConfigFactory.load
 
-	println("Sleeping for 20 seconds")
-	Thread.sleep(20000)
-	println("OK, i'm awake - let's do this")
-
 	val system = ActorSystem("krax", config)
 
-	println("Starting the scheduler")
-	system.scheduler.schedule(10 seconds, 1 second)(send)
-
-	val idExtractor: ShardRegion.IdExtractor = {
-		case msg @ Register(username, _)	⇒ (username, msg)
-	}
-
-	val shardResolver: ShardRegion.ShardResolver = {
-		case Register(username, _)			⇒ (username.hashCode % 12).toString
-	}
-
-	val user: ActorRef = ClusterSharding(system).start(
-		typeName = "User",
-		entryProps = Some(Props[User]),
-		idExtractor = idExtractor,
-		shardResolver = shardResolver)
-
-	def send = {
-		println("******************** CREATING AND SENDING ***********************")
-		val acct = createRandomAccount
-		user ! Register(acct.username, acct.email)
-	}
-
-	val firstNames = List("josh","andy","siva","alex","elliot","phil","frank")
-	val surnames = List("hesketh","conroy","prakash","borshik","kennedy","parthiban")
-
-	case class Account(username: String, email: String)
-	def createRandomAccount: Account = {
-		def grab[T](l: List[T]) = Random.shuffle(l).head
-		val firstName = grab(firstNames)
-		val surname = grab(surnames)
-		val username = surname + firstName.head
-		val email = s"${firstName}.${surname}@thehutgroup.com"
-		Account(username, email)
-	}
+	val userService = system.actorOf(Props[UserService], "userService")
 }
 
 import akka.actor.ActorLogging
@@ -65,6 +27,30 @@ case class GetEmailResponse(email: Option[String])
 
 case class Register(username: String, email: String)
 case class Registered(username: String, email: String)
+
+class UserService extends Actor with ActorLogging {
+	import akka.cluster.routing.ClusterRouterGroup
+	import akka.cluster.routing.ClusterRouterGroupSettings
+	import akka.routing.ConsistentHashingGroup
+
+	def receive = {
+		case registration: Register => user forward registration
+	}
+
+	val idExtractor: ShardRegion.IdExtractor = {
+		case msg @ Register(username, _)	⇒ (username, msg)
+	}
+
+	val shardResolver: ShardRegion.ShardResolver = {
+		case Register(username, _)			⇒ (username.hashCode % 12).toString
+	}
+
+	val user: ActorRef = ClusterSharding(context.system).start(
+		typeName = "User",
+		entryProps = Some(Props[User]),
+		idExtractor = idExtractor,
+		shardResolver = shardResolver)
+}
 
 class User extends PersistentActor with ActorLogging {
 	import ShardRegion.Passivate
