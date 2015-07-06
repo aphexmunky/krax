@@ -1,6 +1,8 @@
 lazy val root = (project in file(".")).
   aggregate(seed, backend)
 
-lazy val seed = project in file("seed")
+lazy val common = project in file("common")
 
-lazy val backend = project in file("backend")
+lazy val seed = project in file("seed") dependsOn(common)
+
+lazy val backend = project in file("backend") dependsOn(common)
