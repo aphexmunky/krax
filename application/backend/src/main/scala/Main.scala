@@ -7,6 +7,4 @@ object Main extends App {
 
 	val system = ActorSystem("krax", config)
 
-	system.actorOf(Props[SimpleClusterListener], name = "clusterListener")
-
 }
