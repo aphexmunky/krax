@@ -14,11 +14,14 @@ object Main extends App {
 
 	val config = ConfigFactory.load
 
-	Thread.sleep(10000)
+	println("Sleeping for 20 seconds")
+	Thread.sleep(20000)
+	println("OK, i'm awake - let's do this")
 
 	val system = ActorSystem("krax", config)
 
-	system.scheduler.schedule(10 seconds, 1 second)(send _)
+	println("Starting the scheduler")
+	system.scheduler.schedule(10 seconds, 1 second)(send)
 
 	val idExtractor: ShardRegion.IdExtractor = {
 		case msg @ Register(username, _)	⇒ (username, msg)
@@ -35,6 +38,7 @@ object Main extends App {
 		shardResolver = shardResolver)
 
 	def send = {
+		println("******************** CREATING AND SENDING ***********************")
 		val acct = createRandomAccount
 		user ! Register(acct.username, acct.email)
 	}
@@ -66,6 +70,7 @@ class User extends PersistentActor with ActorLogging {
 	import ShardRegion.Passivate
 
 	override def persistenceId = self.path.parent.name + "-" + self.path.name
+	println(s"!!!!!!!!!!!!!!!!!!!!! $persistenceId")
 
 	var savedEmail: Option[String] = None
 
