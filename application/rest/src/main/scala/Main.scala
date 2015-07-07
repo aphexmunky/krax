@@ -7,6 +7,8 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.util.{ Success, Failure }
 
+import krax.domain.User._
+
 object Main extends App {
 
 	val config = ConfigFactory.load
@@ -36,12 +38,6 @@ class MyServiceActor extends Actor with MyService with BackendCall {
   // or timeout handling
   def receive = runRoute(myRoute)
 }
-
-case class GetEmail(username: String)
-case class GetEmailResponse(email: Option[String])
-
-case class Register(username: String, email: String)
-case class Registered(username: String, email: String)
 
 trait BackendCall {
 	this: Actor =>
