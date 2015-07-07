@@ -5,6 +5,7 @@ import spray.can.Http
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
+import scala.util.{ Success, Failure }
 
 object Main extends App {
 
@@ -22,6 +23,7 @@ import akka.actor.Actor
 import spray.routing._
 import spray.http._
 import MediaTypes._
+import StatusCodes._
 
 class MyServiceActor extends Actor with MyService with BackendCall {
 
@@ -35,7 +37,7 @@ class MyServiceActor extends Actor with MyService with BackendCall {
   def receive = runRoute(myRoute)
 }
 
-case object GetEmail
+case class GetEmail(username: String)
 case class GetEmailResponse(email: Option[String])
 
 case class Register(username: String, email: String)
@@ -49,6 +51,8 @@ trait BackendCall {
 	import akka.cluster.routing.AdaptiveLoadBalancingGroup
 	import akka.cluster.routing.HeapMetricsSelector
 
+  implicit val timeout = Timeout(3 seconds)
+
 	val backend = context.actorOf(
 	  ClusterRouterGroup(AdaptiveLoadBalancingGroup(HeapMetricsSelector),
 	    ClusterRouterGroupSettings(
@@ -59,21 +63,25 @@ trait BackendCall {
 trait MyService extends HttpService {
   this: BackendCall =>
 
-  val myRoute =
-    path(Rest) { username =>
-      get {
-        respondWithMediaType(`text/html`) { // XML is marshalled to `text/xml` by default, so we simply override here
-          complete {
-          	def call = backend ! Register(username, s"${username}@gmail.com")
-          	call
-          	
-            <html>
-              <body>
-                <h1>Say hello to <i>spray-routing</i> on <i>spray-can</i>!</h1>
-              </body>
-            </html>
-          }
+  implicit def executionContext = actorRefFactory.dispatcher
+
+  lazy val myRoute = defaultRoute
+
+  def defaultRoute = path(Rest) { username =>
+    get {
+    	val f = (backend ? GetEmail(username)).mapTo[GetEmailResponse]
+      onComplete(f) {
+        case Success(emailResponse)   => complete(emailResponse.toString)
+        case Failure(_)               => complete(NotFound)
+      }
+    } ~
+    post {
+      formFields('email) { email =>
+        complete {
+          backend ! Register(username, email)
+          Accepted
         }
       }
     }
+  }
 }

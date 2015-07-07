@@ -22,7 +22,7 @@ object Main extends App {
 import akka.actor.ActorLogging
 import akka.persistence.PersistentActor
 
-case object GetEmail
+case class GetEmail(username: String)
 case class GetEmailResponse(email: Option[String])
 
 case class Register(username: String, email: String)
@@ -35,14 +35,17 @@ class UserService extends Actor with ActorLogging {
 
 	def receive = {
 		case registration: Register => user forward registration
+		case getEmail: GetEmail 	=> user forward getEmail
 	}
 
 	val idExtractor: ShardRegion.IdExtractor = {
 		case msg @ Register(username, _)	⇒ (username, msg)
+		case get @ GetEmail(username)		⇒ (username, get)
 	}
 
 	val shardResolver: ShardRegion.ShardResolver = {
 		case Register(username, _)			⇒ (username.hashCode % 12).toString
+		case GetEmail(username)				⇒ (username.hashCode % 12).toString
 	}
 
 	val user: ActorRef = ClusterSharding(context.system).start(
@@ -61,8 +64,8 @@ class User extends PersistentActor with ActorLogging {
 	var savedEmail: Option[String] = None
 
 	def receiveCommand = {
-		case GetEmail => sender ! GetEmailResponse(savedEmail)
-		case Register(username, email) => persist(Registered(username, email)) { evt =>
+		case get: GetEmail 				=> sender ! GetEmailResponse(savedEmail)
+		case Register(username, email) 	=> persist(Registered(username, email)) { evt =>
 			log.info(s"successfully registered $username as $email")
 			savedEmail = Some(email)
 		}
