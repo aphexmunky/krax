@@ -20,11 +20,16 @@ rest:
    - "8080:8080"
   links:
    - seed
+wait:
+  image: aanand/wait
+  links:
+   - db
 backend:
   build: backend/target/docker
   hostname: krax-backend
   ports:
   - "2551"
   links:
+   - wait
    - seed
    - db
