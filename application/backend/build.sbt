@@ -10,9 +10,10 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-	    "com.typesafe.akka" %% "akka-cluster" % "2.3.11",
-      "com.typesafe.akka" %% "akka-contrib" % "2.3.11",
-      "com.github.krasserm" %% "akka-persistence-cassandra" % "0.3.9"
+      "org.scalaz"          %%  "scalaz-core"                 % "7.1.3",
+	    "com.typesafe.akka"   %%  "akka-cluster"                % "2.3.11",
+      "com.typesafe.akka"   %%  "akka-contrib"                % "2.3.11",
+      "com.github.krasserm" %%  "akka-persistence-cassandra"  % "0.3.9"
 )
 
 scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation", "-Ywarn-dead-code", "-Ywarn-unused", "-Ywarn-unused-import")

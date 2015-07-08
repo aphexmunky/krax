@@ -8,28 +8,28 @@ import spray.http.StatusCodes._
 import akka.pattern.ask
 import scala.util.{ Success, Failure }
 
+import scalaz.\/
+
 trait UserService extends HttpService {
   this: BackendCall =>
 
   implicit def executionContext = actorRefFactory.dispatcher
 
-  lazy val myRoute = defaultRoute
+  lazy val usersRoute = pathPrefix("users") {
+    createUser
+  }
 
-  def defaultRoute = path(Rest) { username =>
-    get {
-    	val f = (backend ? GetEmail(username)).mapTo[GetEmailResponse]
-      onComplete(f) {
-        case Success(emailResponse)   => complete(emailResponse.toString)
-        case Failure(_)               => complete(NotFound)
-      }
-    } ~
+  def createUser = pathPrefix("register") {
     post {
-      formFields('email) { email =>
-        complete {
-          backend ! Register(username, email)
-          Accepted
+      formFields('username) { username =>
+        val f = (backend ? Register(username)).mapTo[\/[RegistrationError,RegisteredUser]]
+        onComplete(f) {
+          case Success(v) if v.isRight  => complete(OK, "test" + v)
+          case Success(v) if v.isLeft   => complete(OK, "test" + v)
+          case Failure(_)               => complete(NotFound)
         }
       }
     }
   }
+
 }

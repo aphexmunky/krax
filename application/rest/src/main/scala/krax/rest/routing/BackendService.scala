@@ -12,7 +12,7 @@ trait BackendCall {
 	import akka.cluster.routing.AdaptiveLoadBalancingGroup
 	import akka.cluster.routing.HeapMetricsSelector
 
-  implicit val timeout = Timeout(3 seconds)
+  	implicit val timeout = Timeout(3 seconds)
 
 	val backend = context.actorOf(
 	  ClusterRouterGroup(AdaptiveLoadBalancingGroup(HeapMetricsSelector),

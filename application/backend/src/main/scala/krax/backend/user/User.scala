@@ -7,25 +7,34 @@ import akka.contrib.pattern._
 
 import krax.domain.User._
 
+import scalaz._
+
 class User extends PersistentActor with ActorLogging {
 	import ShardRegion.Passivate
 
 	override def persistenceId = self.path.parent.name + "-" + self.path.name
 
-	var savedEmail: Option[String] = None
+	def receiveCommand: Receive = unregistered
 
-	def receiveCommand = {
-		case get: GetEmail 				=> sender ! GetEmailResponse(savedEmail)
-		case Register(username, email) 	=> persist(Registered(username, email)) { evt =>
-			log.info(s"successfully registered $username as $email")
-			savedEmail = Some(email)
+	def unregistered: Receive = {
+		case Register(username) 		=> persist(RegisteredUser(username)) { evt =>
+			log.info(s"successfully registered $username")
+			sender ! \/-(evt)
+			context.become(registered)
 		}
 	}
 
-	def receiveRecover = {
-		case Registered(username, email) => {
-			log.info(s"recovering $username, re-setting email to: [$email]")
-			savedEmail = Some(email)
+	def registered: Receive = {
+		case Register(username)			=> {
+			log.info("double registration attempted for user $username")
+			sender ! -\/(alreadyRegistered)
+		}
+	}
+
+	def receiveRecover: Receive = {
+		case RegisteredUser(username) 	=> {
+			log.info(s"recovering $username")
+			context.become(registered)
 		}
 	}
 }

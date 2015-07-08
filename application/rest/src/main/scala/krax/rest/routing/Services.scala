@@ -12,5 +12,5 @@ class Services extends Actor with UserService with BackendCall {
   // this actor only runs our route, but you could add
   // other things here, like request stream processing
   // or timeout handling
-  def receive = runRoute(myRoute)
+  def receive = runRoute(usersRoute)
 }

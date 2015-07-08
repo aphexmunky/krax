@@ -13,6 +13,7 @@ libraryDependencies ++= {
   val akkaV = "2.3.11"
   val sprayV = "1.3.3"
   Seq(
+    "org.scalaz"          %%  "scalaz-core"   % "7.1.3",
     "io.spray"            %%  "spray-can"     % sprayV,
     "io.spray"            %%  "spray-routing" % sprayV,
     "io.spray"            %%  "spray-testkit" % sprayV  % "test",
