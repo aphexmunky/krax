@@ -18,17 +18,32 @@ trait UserService extends HttpService {
   implicit def executionContext = actorRefFactory.dispatcher
 
   lazy val usersRoute = pathPrefix("users") {
-    createUser
+    createUser ~ updateUser
   }
 
   def createUser = pathPrefix("register") {
     post {
       formFields('username) { username =>
-        val f = (backend ? Register(username)).mapTo[\/[RegistrationError,RegisteredUser]]
+        val f = (backend ? Register(username)).mapTo[\/[RegistrationError, RegisteredUser]]
         onComplete(f) {
           case Success(\/-(res)) => complete(OK, res)
           case Success(-\/(res)) => complete(Conflict, res)
           case Failure(_)        => complete(NotFound)
+        }
+      }
+    }
+  }
+
+  def updateUser = pathPrefix("update" / Segment) { username =>
+    pathPrefix("email") {
+      post {
+        formFields('email) { email =>
+          val f = (backend ? AddEmail(username, email)).mapTo[\/[UpdateError, EmailAdded]]
+          onComplete(f) {
+            case Success(\/-(res)) => complete(OK, res)
+            case Success(-\/(res)) => complete(Conflict, res)
+            case Failure(_)        => complete(NotFound)
+          }
         }
       }
     }

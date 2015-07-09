@@ -22,12 +22,20 @@ class User extends PersistentActor with ActorLogging {
 			sender ! \/-(evt)
 			context.become(registered)
 		}
+		case AddEmail(username, email) 	=> {
+			log.info(s"this user [$username] doesn't exist to add email [$email]")
+			sender ! -\/(noUserToUpdate)
+		}
 	}
 
 	def registered: Receive = {
 		case Register(username)			=> {
 			log.info(s"double registration attempted for user $username")
 			sender ! -\/(alreadyRegistered)
+		}
+		case AddEmail(username, email)	=> persist(EmailAdded(email)) { evt =>
+			log.info(s"successfully updated email for user $username to $email")
+			sender ! \/-(evt)
 		}
 	}
 
