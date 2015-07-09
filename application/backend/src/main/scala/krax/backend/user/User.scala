@@ -26,7 +26,7 @@ class User extends PersistentActor with ActorLogging {
 
 	def registered: Receive = {
 		case Register(username)			=> {
-			log.info("double registration attempted for user $username")
+			log.info(s"double registration attempted for user $username")
 			sender ! -\/(alreadyRegistered)
 		}
 	}
