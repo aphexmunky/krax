@@ -8,7 +8,9 @@ import spray.http.StatusCodes._
 import akka.pattern.ask
 import scala.util.{ Success, Failure }
 
-import scalaz.\/
+import krax.entities.UserEntities._
+import spray.httpx.SprayJsonSupport._
+import scalaz._
 
 trait UserService extends HttpService {
   this: BackendCall =>
@@ -24,9 +26,9 @@ trait UserService extends HttpService {
       formFields('username) { username =>
         val f = (backend ? Register(username)).mapTo[\/[RegistrationError,RegisteredUser]]
         onComplete(f) {
-          case Success(v) if v.isRight  => complete(OK, "test" + v)
-          case Success(v) if v.isLeft   => complete(OK, "test" + v)
-          case Failure(_)               => complete(NotFound)
+          case Success(\/-(res)) => complete(OK, res)
+          case Success(-\/(res)) => complete(Conflict, res)
+          case Failure(_)        => complete(NotFound)
         }
       }
     }
