@@ -1,6 +1,8 @@
 db:
   image: abh1nav/cassandra:latest
   hostname: cassandra-db
+  volumes:
+   - cassandra/:/var/lib/cassandra/data
   ports:
    - "7199"
    - "7000"

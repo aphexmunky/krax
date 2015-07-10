@@ -9,6 +9,7 @@ import akka.pattern.ask
 import scala.util.{ Success, Failure }
 
 import krax.entities.UserEntities._
+import krax.rest.Request._
 import spray.httpx.SprayJsonSupport._
 import scalaz._
 
@@ -24,11 +25,15 @@ trait UserService extends HttpService {
   def createUser = pathPrefix("register") {
     post {
       formFields('username) { username =>
-        val f = (backend ? Register(username)).mapTo[\/[RegistrationError, RegisteredUser]]
-        onComplete(f) {
-          case Success(\/-(res)) => complete(OK, res)
-          case Success(-\/(res)) => complete(Conflict, res)
-          case Failure(_)        => complete(NotFound)
+        clientIP { ipAddr =>
+          val requestDetails = RequestDetails(ipAddr.toString)
+          val f = (backend ? Register(username, requestDetails)).mapTo[\/[RegistrationError, RegisteredUser]]
+          onComplete(f) {
+            case Success(\/-(res)) => complete(OK, res)
+            case Success(-\/(res)) => complete(Conflict, res)
+            case Failure(_)        => complete(NotFound)
+            case msg               => complete(NotFound, s"oh shit $msg")
+          }
         }
       }
     }
@@ -38,11 +43,15 @@ trait UserService extends HttpService {
     pathPrefix("email") {
       post {
         formFields('email) { email =>
-          val f = (backend ? AddEmail(username, email)).mapTo[\/[UpdateError, EmailAdded]]
-          onComplete(f) {
-            case Success(\/-(res)) => complete(OK, res)
-            case Success(-\/(res)) => complete(Conflict, res)
-            case Failure(_)        => complete(NotFound)
+          clientIP { ipAddr =>
+            val requestDetails = RequestDetails(ipAddr.toString)
+            val f = (backend ? AddEmail(username, email, requestDetails)).mapTo[\/[UpdateError, EmailAdded]]
+            onComplete(f) {
+              case Success(\/-(res)) => complete(OK, res)
+              case Success(-\/(res)) => complete(Conflict, res)
+              case Failure(_)        => complete(NotFound)
+              case msg               => complete(NotFound, s"oh shit $msg")
+            }
           }
         }
       }
