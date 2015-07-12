@@ -12,12 +12,12 @@ import krax.rest.routing.Services
 
 object Main extends App {
 
-	val config = ConfigFactory.load
+    val config = ConfigFactory.load
 
-	implicit val system = ActorSystem("krax", config)
-	implicit val timeout = Timeout(5 seconds)
+    implicit val system = ActorSystem("krax", config)
+    implicit val timeout = Timeout(5 seconds)
 
-	val service = system.actorOf(Props[Services], "rest-service")
+    val service = system.actorOf(Props[Services], "rest-service")
 
-	IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = 8080)
+    IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = 8080)
 }
