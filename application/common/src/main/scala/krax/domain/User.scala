@@ -19,5 +19,5 @@ object User {
     val noUserToUpdate = UpdateError(2, "User doesn't exist to update against", Some("Updates must be done to a registered user."))
 
     case object CreateNewPassword
-    case class PasswordSet(pw: String)
+    case class PasswordSet(pw: String, salt: Array[Byte])
 }

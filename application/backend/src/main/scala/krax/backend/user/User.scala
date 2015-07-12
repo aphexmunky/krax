@@ -6,7 +6,7 @@ import akka.persistence.PersistentActor
 import akka.contrib.pattern._
 
 import krax.domain.User._
-import krax.rest.Request._
+import krax.util.Security._
 
 import scalaz._
 
@@ -43,9 +43,9 @@ class User extends PersistentActor with ActorLogging {
         }
         case CreateNewPassword              => {
             val security = new Security with SHA256
-            val pw = randomPassword
-            val hashed = oneWayHash(pw)
-            persist(CreateNewPassword(hashed)) { evt =>
+            val pw = security.randomPassword
+            val hashed = security.secureHash(pw)
+            persist(PasswordSet(hashed.hash, hashed.salt)) { evt =>
 
             }
         }
@@ -56,7 +56,7 @@ class User extends PersistentActor with ActorLogging {
             log.info(s"recovering $username")
             context.become(registered)
         }
-        case AddEmail(_ email)              => {
+        case AddEmail(_, email, rq)         => {
             log.info(s"recovering $email")
         }
     }
