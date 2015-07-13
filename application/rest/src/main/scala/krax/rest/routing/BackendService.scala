@@ -3,6 +3,7 @@ package krax.rest.routing
 import akka.actor.Actor
 import akka.util.Timeout
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 trait BackendCall {
     this: Actor =>

@@ -27,9 +27,8 @@ class UserSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSende
       Thread.sleep(100)
       user ! PoisonPill
       Thread.sleep(100)
-      val user2 = system.actorOf(Props[User])
-      Thread.sleep(10000)
-      // expectMsgClass(classOf[\/-[RegisteredUser]])
+      system.actorOf(Props[User])
+      expectMsgClass(classOf[\/-[RegisteredUser]])
     }
  
   }
