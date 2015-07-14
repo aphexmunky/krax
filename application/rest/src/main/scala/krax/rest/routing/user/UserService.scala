@@ -32,7 +32,7 @@ trait UserService extends HttpService {
             case Success(\/-(res)) => complete(OK, res)
             case Success(-\/(res)) => complete(Conflict, res)
             case Failure(_)        => complete(NotFound)
-            case msg               => complete(NotFound, s"oh shit $msg")
+            case msg               => complete(NotFound, s"There was an issue with the request: [$msg]")
           }
         }
       }
@@ -50,7 +50,7 @@ trait UserService extends HttpService {
               case Success(\/-(res)) => complete(OK, res)
               case Success(-\/(res)) => complete(Conflict, res)
               case Failure(_)        => complete(NotFound)
-              case msg               => complete(NotFound, s"oh shit $msg")
+              case msg               => complete(NotFound, s"There was an issue with the request: [$msg]")
             }
           }
         }
