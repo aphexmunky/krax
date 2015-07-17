@@ -11,16 +11,17 @@ resolvers ++= Seq(
 
 libraryDependencies ++= {
   val akkaV = "2.3.11"
-  val sprayV = "1.3.3"
   Seq(
-    "org.scalaz"          %%  "scalaz-core"   % "7.1.3",
-    "io.spray"            %%  "spray-can"     % sprayV,
-    "io.spray"            %%  "spray-routing" % sprayV,
-    "io.spray"            %%  "spray-testkit" % sprayV  % "test",
-    "com.typesafe.akka"   %%  "akka-cluster"  % akkaV,
-    "com.typesafe.akka"   %%  "akka-contrib"  % akkaV,
-    "com.typesafe.akka"   %%  "akka-actor"    % akkaV,
-    "com.typesafe.akka"   %%  "akka-testkit"  % akkaV   % "test"
+    "org.scalaz"          %%  "scalaz-core"                             % "7.1.3",
+    "io.spray"            %%  "spray-json"                              % "1.3.2",
+    "com.typesafe.akka"   %%  "akka-stream-experimental"                % "1.0",
+    "com.typesafe.akka"   %%  "akka-http-spray-json-experimental"       % "1.0",
+    "com.typesafe.akka"   %%  "akka-http-core-experimental"             % "1.0",
+    "com.typesafe.akka"   %%  "akka-http-experimental"                  % "1.0",
+    "com.typesafe.akka"   %%  "akka-cluster"                            % akkaV,
+    "com.typesafe.akka"   %%  "akka-contrib"                            % akkaV,
+    "com.typesafe.akka"   %%  "akka-actor"                              % akkaV,
+    "com.typesafe.akka"   %%  "akka-testkit"                            % akkaV   % "test"
   )  
 }
 

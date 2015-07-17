@@ -2,23 +2,24 @@ package krax.rest
 
 import akka.actor.{ ActorSystem, Props }
 import com.typesafe.config.ConfigFactory
-import akka.io.IO
-import spray.can.Http
-import akka.pattern.ask
+import akka.stream.ActorMaterializer
+import akka.http.scaladsl.Http
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 import krax.rest.routing.Services
+import krax.rest.routing.user.UserService
 
-object Main extends App {
+object Main extends App with Services {
 
     val config = ConfigFactory.load
 
     implicit val system = ActorSystem("krax", config)
+    implicit val materializer = ActorMaterializer()
     implicit val timeout = Timeout(5 seconds)
+    override def services = new UserService {}
 
-    val service = system.actorOf(Props[Services], "rest-service")
+    val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
 
-    IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = 8080)
 }

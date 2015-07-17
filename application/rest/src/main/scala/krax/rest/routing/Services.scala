@@ -1,16 +1,18 @@
 package krax.rest.routing
 
-import akka.actor.Actor
+import akka.actor.ActorSystem
+import akka.util.Timeout
+import akka.stream.ActorMaterializer
+import akka.http.scaladsl.server.Route
+
 import krax.rest.routing.user.UserService
 
-class Services extends Actor with UserService with BackendCall {
+trait Services {
+    implicit val system: ActorSystem
+    implicit val materializer: ActorMaterializer
+    implicit val timeout: Timeout
 
-  // the HttpService trait defines only one abstract member, which
-  // connects the services environment to the enclosing actor or test
-  def actorRefFactory = context
+    def services: UserService
 
-  // this actor only runs our route, but you could add
-  // other things here, like request stream processing
-  // or timeout handling
-  def receive = runRoute(usersRoute)
+    val route: Route = services.usersRoute
 }

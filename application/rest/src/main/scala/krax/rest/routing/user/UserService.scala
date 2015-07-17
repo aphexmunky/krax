@@ -1,22 +1,19 @@
 package krax.rest.routing.user
 
-import krax.rest.routing.BackendCall
+import krax.rest.routing.BackendService
 import krax.domain.User._
-
-import spray.routing.HttpService
-import spray.http.StatusCodes._
-import akka.pattern.ask
-import scala.util.{ Success, Failure }
-
-import krax.entities.UserEntities._
 import krax.rest.Request._
-import spray.httpx.SprayJsonSupport._
+import akka.pattern.ask
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import scala.util.{ Success, Failure }
 import scalaz._
 
-trait UserService extends HttpService {
-  this: BackendCall =>
+class UserService extends SprayJsonSupport {
+  import krax.entities.UserEntities._
 
-  implicit def executionContext = actorRefFactory.dispatcher
+  implicit val registeredUser     = jsonFormat1(RegisteredUser)
 
   lazy val usersRoute = pathPrefix("users") {
     createUser ~ updateUser
@@ -24,16 +21,14 @@ trait UserService extends HttpService {
 
   def createUser = pathPrefix("register") {
     post {
-      formFields('username) { username =>
-        clientIP { ipAddr =>
-          val requestDetails = RequestDetails(ipAddr.toString)
-          val f = (backend ? Register(username, requestDetails)).mapTo[\/[RegistrationError, RegisteredUser]]
-          onComplete(f) {
-            case Success(\/-(res)) => complete(OK, res)
-            case Success(-\/(res)) => complete(Conflict, res)
-            case Failure(_)        => complete(NotFound)
-            case msg               => complete(NotFound, s"There was an issue with the request: [$msg]")
-          }
+      formFields("username") { username =>
+        val requestDetails = RequestDetails()
+        val f = (backend ? Register(username, requestDetails)).mapTo[\/[RegistrationError, RegisteredUser]]
+        onComplete(f) {
+          case Success(\/-(res)) => complete(OK, res.toString)
+          case Success(-\/(res)) => complete(Conflict, res.toString)
+          case Failure(_)        => complete(NotFound)
+          case msg               => complete(NotFound, s"There was an issue with the request: [$msg]")
         }
       }
     }
@@ -42,16 +37,14 @@ trait UserService extends HttpService {
   def updateUser = pathPrefix("update" / Segment) { username =>
     pathPrefix("email") {
       post {
-        formFields('email) { email =>
-          clientIP { ipAddr =>
-            val requestDetails = RequestDetails(ipAddr.toString)
-            val f = (backend ? AddEmail(username, email, requestDetails)).mapTo[\/[UpdateError, EmailAdded]]
-            onComplete(f) {
-              case Success(\/-(res)) => complete(OK, res)
-              case Success(-\/(res)) => complete(Conflict, res)
-              case Failure(_)        => complete(NotFound)
-              case msg               => complete(NotFound, s"There was an issue with the request: [$msg]")
-            }
+        formFields("email") { email =>
+          val requestDetails = RequestDetails()
+          val f = (backend ? AddEmail(username, email, requestDetails)).mapTo[\/[UpdateError, EmailAdded]]
+          onComplete(f) {
+            case Success(\/-(res)) => complete(OK, res.toString)
+            case Success(-\/(res)) => complete(Conflict, res.toString)
+            case Failure(_)        => complete(NotFound)
+            case msg               => complete(NotFound, s"There was an issue with the request: [$msg]")
           }
         }
       }
