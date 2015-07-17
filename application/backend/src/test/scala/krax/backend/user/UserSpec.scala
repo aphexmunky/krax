@@ -23,7 +23,7 @@ class UserSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSende
  
     "Register a username" in {
       val user = system.actorOf(Props[User])
-      user ! Register("name", RequestDetails("ip"))
+      user ! Register("name", RequestDetails(Some("ip")))
       expectMsgClass(classOf[\/-[RegisteredUser]])
     }
  

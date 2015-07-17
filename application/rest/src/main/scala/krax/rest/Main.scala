@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 import krax.rest.routing.Services
-import krax.rest.routing.user.UserService
+// import krax.rest.routing.user.UserService
 
 object Main extends App with Services {
 
@@ -18,7 +18,6 @@ object Main extends App with Services {
     implicit val system = ActorSystem("krax", config)
     implicit val materializer = ActorMaterializer()
     implicit val timeout = Timeout(5 seconds)
-    override def services = new UserService {}
 
     val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
 
