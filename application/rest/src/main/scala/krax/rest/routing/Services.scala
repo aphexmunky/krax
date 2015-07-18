@@ -28,7 +28,7 @@ trait Services {
     ClusterRouterGroup(AdaptiveLoadBalancingGroup(HeapMetricsSelector),
       ClusterRouterGroupSettings(
         totalInstances = 100, routeesPaths = List("/user/userService"),
-        allowLocalRoutees = true, useRole = Some("backend"))).props(),
+        allowLocalRoutees = false, useRole = Some("backend"))).props(),
     name = "backendRouter")
 
 
@@ -36,20 +36,30 @@ trait Services {
     createUser ~ updateUser
   }
 
-  def createUser = pathPrefix("register") {
+  def createUser = path("register") {
     post {
-      extractClientIP { ip =>
-        formFields('username) { username =>
-          val requestDetails = RequestDetails(Some(ip.toString))
-          val f = (backend ? Register(username, requestDetails)).mapTo[\/[RegistrationError, RegisteredUser]]
-          onComplete(f) {
-            case Success(\/-(res)) => complete(OK, res.toString)
-            case Success(-\/(res)) => complete(Conflict, res.toString)
-            case Failure(_)        => complete(NotFound)
-            case msg               => complete(NotFound, s"There was an issue with the request: [$msg]")
-          }
-        }        
+      formFields('username) { username =>
+        val requestDetails = RequestDetails(Some("ip.toString"))
+        val f = (backend ? Register(username, requestDetails)).mapTo[\/[RegistrationError, RegisteredUser]]
+        onComplete(f) {
+          case Success(\/-(res)) => complete(OK, res.toString)
+          case Success(-\/(res)) => complete(Conflict, res.toString)
+          case Failure(_)        => complete(NotFound)
+          case msg               => complete(NotFound, s"There was an issue with the request: [$msg]")
+        }
       }
+      // extractClientIP { ip =>
+      //   formFields('username) { username =>
+      //     val requestDetails = RequestDetails(Some(ip.toString))
+      //     val f = (backend ? Register(username, requestDetails)).mapTo[\/[RegistrationError, RegisteredUser]]
+      //     onComplete(f) {
+      //       case Success(\/-(res)) => complete(OK, res.toString)
+      //       case Success(-\/(res)) => complete(Conflict, res.toString)
+      //       case Failure(_)        => complete(NotFound)
+      //       case msg               => complete(NotFound, s"There was an issue with the request: [$msg]")
+      //     }
+      //   }        
+      // }
     }
   }
 

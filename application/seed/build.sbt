@@ -6,13 +6,18 @@ enablePlugins(DockerPlugin)
 
 resolvers ++= Seq(
 	"krasserm at bintray" at "http://dl.bintray.com/krasserm/maven",
-	"dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
+	"dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven",
+  "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/"
 )
 
-libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-cluster" % "2.3.11",
-      "com.typesafe.akka" %% "akka-contrib" % "2.3.11"
-)
+libraryDependencies ++= {
+  val akkaV = "2.4-SNAPSHOT"
+  Seq(
+      "com.typesafe.akka" %% "akka-cluster"                % akkaV,
+      "com.typesafe.akka" %% "akka-cluster-sharding"       % akkaV, 
+      "com.typesafe.akka" %% "akka-contrib"                % akkaV
+  )
+}
 
 scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation", "-Ywarn-dead-code", "-Ywarn-unused", "-Ywarn-unused-import")
 

@@ -19,6 +19,6 @@ object Main extends App with Services {
     implicit val materializer = ActorMaterializer()
     implicit val timeout = Timeout(5 seconds)
 
-    val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
+    val bindingFuture = Http().bindAndHandle(route, "localhost", 8081)
 
 }

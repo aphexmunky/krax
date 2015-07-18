@@ -10,3 +10,5 @@ lazy val backend = (project in file("backend")).dependsOn(common)
 lazy val rest = (project in file("rest")).dependsOn(common)
 
 scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation", "-Ywarn-dead-code", "-Ywarn-unused", "-Ywarn-unused-import", "-feature")
+
+test in assembly := {}

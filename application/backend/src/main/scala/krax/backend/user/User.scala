@@ -2,16 +2,12 @@ package krax.backend.user
 
 import akka.actor.{ ActorLogging, ActorRef }
 import akka.persistence.PersistentActor
-
-import akka.contrib.pattern._
-
 import krax.domain.User._
 import krax.util.Security._
 
 import scalaz._
 
 class User extends PersistentActor with ActorLogging {
-    import ShardRegion.Passivate
 
     override def persistenceId = self.path.parent.name + "-" + self.path.name
 

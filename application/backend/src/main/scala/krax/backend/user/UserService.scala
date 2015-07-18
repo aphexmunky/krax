@@ -1,12 +1,12 @@
 package krax.backend.user
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+import akka.actor._
 
-import akka.contrib.pattern._
+import akka.cluster.sharding._
 
 import krax.domain.User._
 
-class UserService extends Actor with ActorLogging {
+class UserService(as: ActorSystem) extends Actor with ActorLogging {
 
     def receive = {
         case registration: Register         ⇒ user forward registration
@@ -14,21 +14,28 @@ class UserService extends Actor with ActorLogging {
         case add: AddEmail                  ⇒ user forward add
     }
 
-    val idExtractor: ShardRegion.IdExtractor = {
+    val idExtractor: ShardRegion.ExtractEntityId = {
         case msg @ Register(username, _)    ⇒ (username, msg)
         case get @ GetEmail(username)       ⇒ (username, get)
         case add @ AddEmail(username, _, _) ⇒ (username, add)
     }
 
-    val shardResolver: ShardRegion.ShardResolver = {
+    val shardResolver: ShardRegion.ExtractShardId = {
         case Register(username, _)          ⇒ (username.hashCode % 12).toString
         case GetEmail(username)             ⇒ (username.hashCode % 12).toString
         case AddEmail(username, _, _)       ⇒ (username.hashCode % 12).toString
     }
 
-    val user: ActorRef = ClusterSharding(context.system).start(
+    // val user: ActorRef = ClusterSharding(context.system).start(
+    //     typeName = "User",
+    //     entryProps = Props[User],
+    //     settings = ClusterShardingSettings(context.system),
+    //     extractEntityId = idExtractor,
+    //     extractShardId = shardResolver)
+    val user: ActorRef = ClusterSharding(as).start(
         typeName = "User",
-        entryProps = Some(Props[User]),
-        idExtractor = idExtractor,
-        shardResolver = shardResolver)
+        entityProps = Props[User],
+        settings = ClusterShardingSettings(as),
+        extractEntityId = idExtractor,
+        extractShardId = shardResolver)
 }

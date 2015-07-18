@@ -11,5 +11,5 @@ object Main extends App {
 
     val system = ActorSystem("krax", config)
 
-    val userService = system.actorOf(Props[UserService], "userService")
+    val userService = system.actorOf(Props(new UserService(system)), "userService")
 }
