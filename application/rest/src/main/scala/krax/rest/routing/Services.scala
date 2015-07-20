@@ -33,7 +33,7 @@ trait Services {
 
 
   val route: Route = pathPrefix("users") {
-    createUser ~ updateUser
+    createUser ~ updateUser ~ get { complete(OK, "test") }
   }
 
   def createUser = pathPrefix("register") {

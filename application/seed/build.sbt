@@ -10,8 +10,8 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-cluster" % "2.3.11",
-      "com.typesafe.akka" %% "akka-contrib" % "2.3.11"
+      "com.typesafe.akka" %% "akka-cluster" % "2.3.12",
+      "com.typesafe.akka" %% "akka-contrib" % "2.3.12"
 )
 
 scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation", "-Ywarn-dead-code", "-Ywarn-unused", "-Ywarn-unused-import")

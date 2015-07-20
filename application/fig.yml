@@ -13,7 +13,7 @@ seed:
   build: seed/target/docker
   hostname: krax-seed
   ports:
-  - "2551"
+  - "2551:2551"
 rest:
   build: rest/target/docker
   hostname: krax-rest
